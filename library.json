@@ -1,7 +1,7 @@
 {
   "name": "ServoESP32Fix",
   "keywords": "servo, esp32",
-  "description": "Generate RC servo signal on a selected pins with ESP32 device and Arduino framework, fixed support for latest ESP32 core",
+  "description": "Generate precise RC servo signals on specified pins using ESP32 with Arduino framework, ensuring compatibility with the latest ESP32 core.",
   "homepage": "https://github.com/alunit3/ServoESP32/",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,7 @@
     "url": "https://github.com/alunit3/ServoESP32.git"
   },
   "authors": {
-    "name": "alunit3",
+    "name": "Alunite",
     "email": "",
     "url": "https://www.alunite.lol/",
     "maintainer": true
