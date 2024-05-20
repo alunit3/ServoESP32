@@ -249,8 +249,7 @@ public:
     T mapTemplate(T x, T in_min, T in_max, T out_min, T out_max) const {
         // Check if T is a floating-point type using std::is_floating_point
         constexpr bool is_float_type = std::is_floating_point<T>::value;
-    
-        if constexpr (is_float_type) {
+        if (is_float_type) {
             // If T is a floating-point type, use the floating-point formula
             return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
         } else {
