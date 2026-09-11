@@ -24,14 +24,12 @@
  * SOFTWARE.
  *****************************************************************************/
 
-
-// clang-format off
 #pragma once
 
 #include "Arduino.h"
 
 class ServoBase {
-protected:
+   protected:
     // The main purpose of ServoBase is to make sure that multiple instances of
     // ServoTemplate class with different types share channel_next_free.
     static int channel_next_free;
@@ -40,12 +38,14 @@ protected:
 template <class T>
 class ServoTemplate : public ServoBase {
     // From esp32-hal-ledc.c
+    // clang-format off
 #ifdef SOC_LEDC_SUPPORT_HS_MODE
 #define LEDC_CHANNELS (SOC_LEDC_CHANNEL_NUM << 1)
 #else
 #define LEDC_CHANNELS (SOC_LEDC_CHANNEL_NUM)
 #endif
-public:
+    // clang-format on
+   public:
     /**
      * Default min/max pulse widths (in microseconds) and angles
      * (in degrees).  Values chosen for Arduino compatibility.
@@ -63,10 +63,16 @@ public:
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
     static constexpr int TIMER_RESOLUTION = (16 < SOC_LEDC_TIMER_BIT_WIDTH) ? 16 : SOC_LEDC_TIMER_BIT_WIDTH;
 #else
-    static constexpr int TIMER_RESOLUTION = (16 < SOC_LEDC_TIMER_BIT_WIDE_NUM) ? 16 : SOC_LEDC_TIMER_BIT_WIDE_NUM; //   std::min(16, SOC_LEDC_TIMER_BIT_WIDE_NUM);
+    static constexpr int TIMER_RESOLUTION =
+        (16 < SOC_LEDC_TIMER_BIT_WIDE_NUM)
+            ? 16
+            : SOC_LEDC_TIMER_BIT_WIDE_NUM;  //   std::min(16, SOC_LEDC_TIMER_BIT_WIDE_NUM);
 #endif
-#else 
-    static constexpr int TIMER_RESOLUTION = (16 < SOC_LEDC_TIMER_BIT_WIDE_NUM) ? 16 : SOC_LEDC_TIMER_BIT_WIDE_NUM; //   std::min(16, SOC_LEDC_TIMER_BIT_WIDE_NUM);
+#else
+    static constexpr int TIMER_RESOLUTION =
+        (16 < SOC_LEDC_TIMER_BIT_WIDE_NUM)
+            ? 16
+            : SOC_LEDC_TIMER_BIT_WIDE_NUM;  //   std::min(16, SOC_LEDC_TIMER_BIT_WIDE_NUM);
 #endif
 
     static const int PERIOD_TICKS = (1 << TIMER_RESOLUTION) - 1;
@@ -131,16 +137,16 @@ public:
         if (tempPeriodUs <= maxPulseWidthUs) {
             return false;
         }
-        if(channel == CHANNEL_NOT_ATTACHED) {
+        if (channel == CHANNEL_NOT_ATTACHED) {
             channel = 0;
-            for (int mask = 1; mask != 0; mask <<= 1)  {
-                if((channel_next_free & mask) == 0) {
+            for (int mask = 1; mask != 0; mask <<= 1) {
+                if ((channel_next_free & mask) == 0) {
                     break;
                 }
                 ++channel;
             }
         }
-        if(channel >= 0 && channel < LEDC_CHANNELS) {
+        if (channel >= 0 && channel < LEDC_CHANNELS) {
             _channel = channel;
             channel_next_free |= (1 << channel);
         } else {
@@ -281,7 +287,7 @@ public:
      */
     int attachedPin() const { return _pin; }
 
- private:
+   private:
     void _resetFields(void) {
         _pin = PIN_NOT_ATTACHED;
         _pulseWidthTicks = 0;
@@ -296,7 +302,7 @@ public:
     T mapTemplate(T x, T in_min, T in_max, T out_min, T out_max) const {
         // Check if T is a floating-point type using std::is_floating_point
         constexpr bool is_float_type = std::is_floating_point<T>::value;
-    
+
         if constexpr (is_float_type) {
             // If T is a floating-point type, use the floating-point formula
             return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -308,7 +314,9 @@ public:
 
     int _usToTicks(int us) const { return ((PERIOD_TICKS * us) / _periodUs); }
     int _ticksToUs(int duty) const { return ((_periodUs * duty) / PERIOD_TICKS); }
-    T _usToAngle(int us) const { return mapTemplate((T)us, (T)_minPulseWidthUs, (T)_maxPulseWidthUs, _minAngle, _maxAngle); }
+    T _usToAngle(int us) const {
+        return mapTemplate((T)us, (T)_minPulseWidthUs, (T)_maxPulseWidthUs, _minAngle, _maxAngle);
+    }
     int _angleToUs(T angle) const {
         return (int)mapTemplate(angle, _minAngle, _maxAngle, _minPulseWidthUs, _maxPulseWidthUs);
     }
@@ -329,4 +337,4 @@ using Servo = ServoTemplate<int>;
 using ServoFloat = ServoTemplate<float>;
 
 // Use ServoDouble for double precision
-using ServoDouble = ServoTemplate<double>;  
+using ServoDouble = ServoTemplate<double>;
