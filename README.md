@@ -32,7 +32,7 @@ Example: [04-SimpleServoAngles](examples/04-SimpleServoAngles/04-SimpleServoAngl
 
 There are also a ServoFloat and ServoDouble variant available. Use one of these when working in radians. 
 
-Example: : [05-SimpleServoRadians](examples/05-SimpleServoRadians/05-SimpleServoRadians.ino)
+Example: [05-SimpleServoRadians](examples/05-SimpleServoRadians/05-SimpleServoRadians.ino)
 
 ### IMPORTANT INFO
 According testings, the frequency for ESP32 S2/S3/C3 has to be set at least to 200 Hz. Here is an example, how to set just frequency:

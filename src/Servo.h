@@ -110,12 +110,12 @@ public:
      * @param minPulseWidthUs Minimum pulse width to write to pin, in
      *                        microseconds.  This will be associated
      *                        with a minAngle angle.  Defaults to
-     *                        DEFAULT_MIN_PULSE_WIDTH_US = 544.
+     *                        DEFAULT_MIN_PULSE_WIDTH_US = 500.
      *
      * @param maxPulseWidthUs Maximum pulse width to write to pin, in
      *                        microseconds.  This will be associated
      *                        with a maxAngle angle. Defaults to
-     *                        DEFAULT_MAX_PULSE_WIDTH_US = 2400.
+     *                        DEFAULT_MAX_PULSE_WIDTH_US = 2500.
      *
      * @param frequency Frequency in hz to send PWM at.
      *                  Defaults to DEFAULT_FREQUENCY.
@@ -155,13 +155,13 @@ public:
         _periodUs = tempPeriodUs;
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-	ledcAttachChannel(_pin, frequency, TIMER_RESOLUTION, _channel);
+        ledcAttachChannel(_pin, frequency, TIMER_RESOLUTION, _channel);
 #else
-	ledcSetup(_channel, frequency, TIMER_RESOLUTION);
+        ledcSetup(_channel, frequency, TIMER_RESOLUTION);
         ledcAttachPin(_pin, _channel);
 #endif
 #else
-	ledcSetup(_channel, frequency, TIMER_RESOLUTION);
+        ledcSetup(_channel, frequency, TIMER_RESOLUTION);
         ledcAttachPin(_pin, _channel);
 #endif
         return true;
@@ -179,7 +179,7 @@ public:
             return false;
         }
 
-	channel_next_free &= ~(1 << _channel);
+        channel_next_free &= ~(1 << _channel);
 
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
@@ -191,6 +191,7 @@ public:
         ledcDetachPin(_pin);
 #endif
         _pin = PIN_NOT_ATTACHED;
+        _channel = CHANNEL_NOT_ATTACHED;
         return true;
     }
 
@@ -226,12 +227,12 @@ public:
         _pulseWidthTicks = _usToTicks(pulseWidthUs);
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-	ledcWrite(_pin, _pulseWidthTicks);
+        ledcWrite(_pin, _pulseWidthTicks);
 #else
-	ledcWrite(_channel, _pulseWidthTicks);
+        ledcWrite(_channel, _pulseWidthTicks);
 #endif
 #else
-	ledcWrite(_channel, _pulseWidthTicks);
+        ledcWrite(_channel, _pulseWidthTicks);
 #endif
     }
 
@@ -255,12 +256,12 @@ public:
         }
 #ifdef ESP_ARDUINO_VERSION_MAJOR
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-	int duty = ledcRead(_pin);
+        int duty = ledcRead(_pin);
 #else
-	int duty = ledcRead(_channel);
+        int duty = ledcRead(_channel);
 #endif
 #else
-	int duty = ledcRead(_channel);
+        int duty = ledcRead(_channel);
 #endif
         return _ticksToUs(duty);
     }
