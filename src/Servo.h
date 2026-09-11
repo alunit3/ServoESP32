@@ -54,12 +54,21 @@ public:
     static constexpr int DEFAULT_MIN_ANGLE = 0;
     static constexpr int DEFAULT_MAX_ANGLE = 180;
 
-    static const int DEFAULT_MIN_PULSE_WIDTH_US = 544;   // the shortest pulse sent to a servo
-    static const int DEFAULT_MAX_PULSE_WIDTH_US = 2400;  // the longest pulse sent to a servo
+    static const int DEFAULT_MIN_PULSE_WIDTH_US = 500;   // the shortest pulse sent to a servo
+    static const int DEFAULT_MAX_PULSE_WIDTH_US = 2500;  // the longest pulse sent to a servo
 
     static const int DEFAULT_FREQUENCY = 50;
 
-    static const int TIMER_RESOLUTION = 16;
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    static constexpr int TIMER_RESOLUTION = (16 < SOC_LEDC_TIMER_BIT_WIDTH) ? 16 : SOC_LEDC_TIMER_BIT_WIDTH;
+#else
+    static constexpr int TIMER_RESOLUTION = (16 < SOC_LEDC_TIMER_BIT_WIDE_NUM) ? 16 : SOC_LEDC_TIMER_BIT_WIDE_NUM; //   std::min(16, SOC_LEDC_TIMER_BIT_WIDE_NUM);
+#endif
+#else 
+    static constexpr int TIMER_RESOLUTION = (16 < SOC_LEDC_TIMER_BIT_WIDE_NUM) ? 16 : SOC_LEDC_TIMER_BIT_WIDE_NUM; //   std::min(16, SOC_LEDC_TIMER_BIT_WIDE_NUM);
+#endif
+
     static const int PERIOD_TICKS = (1 << TIMER_RESOLUTION) - 1;
 
     static const int CHANNEL_NOT_ATTACHED = -1;
@@ -122,14 +131,20 @@ public:
         if (tempPeriodUs <= maxPulseWidthUs) {
             return false;
         }
-        if (channel == CHANNEL_NOT_ATTACHED) {
-            if (channel_next_free == LEDC_CHANNELS) {
-                return false;
+        if(channel == CHANNEL_NOT_ATTACHED) {
+            channel = 0;
+            for (int mask = 1; mask != 0; mask <<= 1)  {
+                if((channel_next_free & mask) == 0) {
+                    break;
+                }
+                ++channel;
             }
-            _channel = channel_next_free;
-            channel_next_free++;
-        } else {
+        }
+        if(channel >= 0 && channel < LEDC_CHANNELS) {
             _channel = channel;
+            channel_next_free |= (1 << channel);
+        } else {
+            return false;
         }
 
         _pin = pin;
@@ -138,9 +153,17 @@ public:
         _minPulseWidthUs = minPulseWidthUs;
         _maxPulseWidthUs = maxPulseWidthUs;
         _periodUs = tempPeriodUs;
-
-        ledcSetup(_channel, frequency, TIMER_RESOLUTION);
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+	ledcAttachChannel(_pin, frequency, TIMER_RESOLUTION, _channel);
+#else
+	ledcSetup(_channel, frequency, TIMER_RESOLUTION);
         ledcAttachPin(_pin, _channel);
+#endif
+#else
+	ledcSetup(_channel, frequency, TIMER_RESOLUTION);
+        ledcAttachPin(_pin, _channel);
+#endif
         return true;
     }
 
@@ -156,10 +179,17 @@ public:
             return false;
         }
 
-        if (_channel == (channel_next_free - 1))
-            channel_next_free--;
+	channel_next_free &= ~(1 << _channel);
 
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+        ledcDetach(_pin);
+#else
         ledcDetachPin(_pin);
+#endif
+#else
+        ledcDetachPin(_pin);
+#endif
         _pin = PIN_NOT_ATTACHED;
         return true;
     }
@@ -194,7 +224,15 @@ public:
         }
         pulseWidthUs = constrain(pulseWidthUs, _minPulseWidthUs, _maxPulseWidthUs);
         _pulseWidthTicks = _usToTicks(pulseWidthUs);
-        ledcWrite(_channel, _pulseWidthTicks);
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+	ledcWrite(_pin, _pulseWidthTicks);
+#else
+	ledcWrite(_channe, _pulseWidthTicks);
+#endif
+#else
+	ledcWrite(_channe, _pulseWidthTicks);
+#endif
     }
 
     /**
@@ -215,7 +253,15 @@ public:
         if (!this->attached()) {
             return 0;
         }
-        int duty = ledcRead(_channel);
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+	int duty = ledcRead(_pin);
+#else
+	int duty = ledcRead(_channel);
+#endif
+#else
+	int duty = ledcRead(_channel);
+#endif
         return _ticksToUs(duty);
     }
 
@@ -249,7 +295,8 @@ public:
     T mapTemplate(T x, T in_min, T in_max, T out_min, T out_max) const {
         // Check if T is a floating-point type using std::is_floating_point
         constexpr bool is_float_type = std::is_floating_point<T>::value;
-        if (is_float_type) {
+    
+        if constexpr (is_float_type) {
             // If T is a floating-point type, use the floating-point formula
             return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
         } else {
