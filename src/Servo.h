@@ -228,10 +228,10 @@ public:
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 	ledcWrite(_pin, _pulseWidthTicks);
 #else
-	ledcWrite(_channe, _pulseWidthTicks);
+	ledcWrite(_channel, _pulseWidthTicks);
 #endif
 #else
-	ledcWrite(_channe, _pulseWidthTicks);
+	ledcWrite(_channel, _pulseWidthTicks);
 #endif
     }
 
